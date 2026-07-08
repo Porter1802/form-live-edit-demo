@@ -18,6 +18,12 @@ These decisions were agreed during spec review and take precedence over any loos
 - **Complex fields** — The Recommendations, Financial, and FTE tables are edited via the "Edit" button → popup/modal, not cell-by-cell inline. Simple dropdowns render inline as click-to-open pickers.
 - **Collaboration** — Real, server-backed concurrent editing (Google-Docs style) is in scope. Invented usernames and presence indicators (cursors/avatars) are shown; no login is required.
 - **Persistence** — A backend is in scope. Projects and their data persist server-side so collaboration and autosave are real.
+- **Paragraph numbering** — This is the single most important must-have of the report presentation; it must work reliably.
+- **Images** — Embedded in rich text as base64 data URIs (kept inline through storage and Word export).
+- **Early preview** — The summary preview can be opened at any time, even with an incomplete project. Sections/fields that are not yet completed are shown in **red** to flag them.
+- **Landing page** — Alongside New and Edit, each project has a **Delete** button.
+- **New Project flow** — The New Project button creates the project and drops the user directly into Step 1 (Basic Details).
+- **Keyboard shortcuts** — Ctrl/Cmd-S to save; standard Ctrl/Cmd-B/I/U within rich-text fields; keyboard navigation between steps.
 - **Tech stack** — Free choice. Proposed: React + Vite + TypeScript with TipTap (ProseMirror) for WYSIWYG on the frontend; a Node.js backend running a Yjs WebSocket sync server (`y-websocket`) plus a lightweight persistence store (e.g. SQLite) for the project list and document snapshots. Word export via a `.docx` generation library. This may be adjusted during implementation as long as the behaviour above is met.
 
 ## General settings
