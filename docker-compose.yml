@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    environment:
+      PORT: ${PORT:-3000}
+      DATA_DIR: /app/data
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    volumes:
+      - ./data:/app/data

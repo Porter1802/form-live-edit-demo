@@ -1,0 +1,21 @@
+{
+  "name": "form-live-edit-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-step form with a professional report preview and collaborative inline edit mode",
+  "workspaces": [
+    "server",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build:frontend && npm run build:server",
+    "build:frontend": "npm -w frontend run build",
+    "build:server": "npm -w server run build",
+    "start": "node server/dist/index.cjs",
+    "dev:server": "npm -w server run dev",
+    "dev:frontend": "npm -w frontend run dev"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

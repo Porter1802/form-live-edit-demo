@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+server/dist
+server/public
+frontend/dist
+data
+*.db
+*.db-*
+.git
+.gitignore
+*.log
+npm-debug.log*
