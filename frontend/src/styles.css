@@ -270,6 +270,11 @@ h1, h2, h3, h4 { margin: 0 0 0.4em; }
   padding: 10px 12px; border-radius: 6px; margin-bottom: 14px;
 }
 .import-warn.subtle { background: #eef2f7; border-color: var(--line); color: var(--muted); }
+.import-demo-banner {
+  background: #eef4ff; border: 1px solid #b9cdf5; color: #1f3a6e;
+  padding: 10px 12px; border-radius: 6px; margin-bottom: 14px; line-height: 1.45;
+}
+.import-demo-banner code { background: rgba(31, 58, 110, 0.08); }
 .import-error { color: var(--danger); margin-bottom: 12px; }
 .small { font-size: 13px; }
 

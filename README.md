@@ -103,7 +103,7 @@ npm start         # node server/dist/index.cjs
 | `PORT` | `3000` | Port the server listens on (HTTP + API + WebSocket). |
 | `DATA_DIR` | `./data` | Directory for the SQLite database file. |
 | `STATIC_DIR` | `<bundle>/../public` | Built SPA directory to serve. |
-| `ANTHROPIC_API_KEY` | _(unset)_ | Enables the AI Word-form import. Server-side only. When unset, the import feature reports itself unavailable. |
+| `ANTHROPIC_API_KEY` | _(unset)_ | Enables the AI Word-form import. Server-side only. When unset, the import feature runs in **demo mode** — uploading any `.docx` loads canned sample data (the file is not read or sent anywhere) so the upload → validate → confirm flow can be walked through without an API key. |
 | `ANTHROPIC_BASE_URL` | Anthropic API | Point at an approved onshore / IRAP-assessed gateway. **Only taken from server config, never from the request** (endpoint allow-listing). |
 | `AI_MODEL` | `claude-opus-4-8` | Model used for extraction. A smaller model (e.g. Haiku) is a reasonable choice for this task. |
 | `AI_EFFORT` | `low` | Reasoning effort for extraction (`low`…`max`). Low favours speed and repeatability. |
@@ -118,6 +118,14 @@ a project (**⬆ Import from Word** → fills the current project). The flow is
 confirm. On confirm, the parsed values are applied to the collaborative document
 just like normal edits, so autosave, live preview and Word export all pick them
 up.
+
+**Demo mode (no API key):** when `ANTHROPIC_API_KEY` is not set, the flow still
+works — pick any `.docx` and the form is filled with realistic sample data
+instead of a real extraction. The upload is accepted and validated as a `.docx`
+but its contents are never read or sent anywhere. The upload and validate screens
+are clearly labelled as a demo, and the sample data deliberately exercises every
+status badge (matched / check / empty) so you can see how the validate step
+behaves. Set the API key for real AI extraction.
 
 Hardening baked in (see the risk assessment for the full picture): the AI
 endpoint is configured only from server-side env vars; uploads are memory-only,
