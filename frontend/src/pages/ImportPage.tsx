@@ -82,13 +82,20 @@ export function ImportPage() {
   const isExisting = Boolean(existingId);
 
   const [phase, setPhase] = useState<Phase>("checking");
+  const [demo, setDemo] = useState(false);
   const [error, setError] = useState<string>("");
   const [proposal, setProposal] = useState<ParseProposal | null>(null);
   const [data, setData] = useState<ProjectData | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    api.parseStatus().then((s) => setPhase(s.available ? "upload" : "unavailable"));
+    api.parseStatus().then((s) => {
+      // With a real AI key → live upload. Without one → demo mode (canned sample
+      // data) so the flow can still be shown. Only fully "unavailable" if the
+      // status check itself failed.
+      setDemo(Boolean(s.demo) && !s.available);
+      setPhase(s.available || s.demo ? "upload" : "unavailable");
+    });
   }, []);
 
   const reportByKey = useMemo(() => {
@@ -176,20 +183,31 @@ export function ImportPage() {
 
       {phase === "upload" && (
         <div className="import-panel">
+          {demo && (
+            <p className="import-demo-banner">
+              🎭 <strong>Demo mode</strong> — no AI key is configured, so this is a
+              walkthrough. Pick any <code>.docx</code> and the form will be filled with{" "}
+              <strong>sample data</strong> so you can see how the flow works. Your file is{" "}
+              <strong>not read or sent anywhere</strong>. Set <code>ANTHROPIC_API_KEY</code> on
+              the server for real AI extraction.
+            </p>
+          )}
           {isExisting && (
             <p className="import-warn">
               ⚠ Confirming will <strong>overwrite the fields</strong> in this project with the
-              imported values.
+              {demo ? " sample" : " imported"} values.
             </p>
           )}
-          <p className="import-warn subtle">
-            🔒 Document contents are sent to the configured AI endpoint. Do not upload
-            Cabinet-in-Confidence or classified material to an unapproved endpoint — see{" "}
-            <code>docs/SECURITY-RISK-ASSESSMENT.md</code>.
-          </p>
+          {!demo && (
+            <p className="import-warn subtle">
+              🔒 Document contents are sent to the configured AI endpoint. Do not upload
+              Cabinet-in-Confidence or classified material to an unapproved endpoint — see{" "}
+              <code>docs/SECURITY-RISK-ASSESSMENT.md</code>.
+            </p>
+          )}
           <input ref={fileRef} type="file" accept=".docx" hidden onChange={onFile} />
           <button className="btn primary large" onClick={() => fileRef.current?.click()}>
-            Choose a .docx file…
+            {demo ? "Choose any .docx to see the demo…" : "Choose a .docx file…"}
           </button>
         </div>
       )}
@@ -197,7 +215,7 @@ export function ImportPage() {
       {phase === "processing" && (
         <div className="import-panel center">
           <div className="spinner" />
-          <p className="muted">Parsing the document with AI…</p>
+          <p className="muted">{demo ? "Loading sample data…" : "Parsing the document with AI…"}</p>
         </div>
       )}
 
@@ -219,6 +237,13 @@ export function ImportPage() {
 
       {phase === "validate" && data && proposal && (
         <div className="import-validate">
+          {proposal.meta.demo && (
+            <p className="import-demo-banner">
+              🎭 <strong>Demo mode</strong> — these are <strong>sample values</strong>, not read
+              from your file. Everything below (editing, status badges, confirm) behaves exactly
+              as it would with a real AI key.
+            </p>
+          )}
           <div className="import-legend">
             <span className="muted">
               Model: <code>{proposal.meta.model}</code>
@@ -341,7 +366,11 @@ export function ImportPage() {
               Cancel
             </button>
             <button className="btn primary" onClick={confirm}>
-              {isExisting ? "Confirm & overwrite project" : "Confirm & create project"}
+              {isExisting
+                ? "Confirm & overwrite project"
+                : proposal.meta.demo
+                  ? "Confirm & create demo project"
+                  : "Confirm & create project"}
             </button>
           </div>
         </div>

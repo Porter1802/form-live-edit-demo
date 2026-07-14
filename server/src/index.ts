@@ -21,6 +21,7 @@ import { materialize } from "./materialize.js";
 import { exportDocx } from "./docx.js";
 import { extractDocx } from "./parse/extract.js";
 import { aiExtract, aiConfigured } from "./parse/aiExtract.js";
+import { demoExtraction } from "./parse/demoExtract.js";
 import { coerce } from "./parse/coerce.js";
 import { ProjectSummary } from "../../common/src/index";
 
@@ -110,9 +111,12 @@ app.get("/api/projects/:id/export.docx", async (req, res) => {
 });
 
 // ---- AI Word-form parsing --------------------------------------------------
-// Reports whether the AI backend is configured (drives the upload UI).
+// Reports whether the AI backend is configured (drives the upload UI). When it
+// is not, the endpoint still works in `demo` mode (canned sample data) so the
+// upload flow can be shown without an API key.
 app.get("/api/parse/status", (_req, res) => {
-  res.json({ available: aiConfigured() });
+  const available = aiConfigured();
+  res.json({ available, demo: !available });
 });
 
 // Accepts a .docx upload, extracts its text, asks the AI to extract a structured
@@ -130,16 +134,21 @@ app.post("/api/projects/parse", (req, res) => {
       });
       return;
     }
-    if (!aiConfigured()) {
-      res.status(503).json({
-        error:
-          "AI backend not configured. Set ANTHROPIC_API_KEY (and optionally ANTHROPIC_BASE_URL / AI_MODEL) on the server.",
-      });
-      return;
-    }
     const file = (req as express.Request & { file?: { buffer: Buffer } }).file;
     if (!file) {
       res.status(400).json({ error: "No file uploaded (field name must be 'file')" });
+      return;
+    }
+    // Demo mode: no AI backend configured. Skip the model call entirely and
+    // return canned sample data so the upload → validate → confirm flow can be
+    // walked through visually. The uploaded file is accepted (and validated as a
+    // .docx by the upload guard) but its contents are not read or sent anywhere.
+    if (!aiConfigured()) {
+      const proposal = coerce(demoExtraction(), 0, false);
+      proposal.meta.demo = true;
+      proposal.meta.model = "demo — sample data (no API key set)";
+      // Small artificial delay so the "processing" state is visible in the demo.
+      setTimeout(() => res.json(proposal), 700);
       return;
     }
     try {

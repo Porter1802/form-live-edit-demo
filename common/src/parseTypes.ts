@@ -26,5 +26,8 @@ export interface ParseProposal {
     model: string;
     sourceChars: number;
     truncated: boolean;
+    // True when this proposal is canned sample data produced without calling the
+    // AI backend (no ANTHROPIC_API_KEY set). Lets the UI label the flow clearly.
+    demo?: boolean;
   };
 }

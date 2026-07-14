@@ -34,7 +34,7 @@ export const api = {
   exportUrl(id: string): string {
     return `/api/projects/${id}/export.docx`;
   },
-  async parseStatus(): Promise<{ available: boolean }> {
+  async parseStatus(): Promise<{ available: boolean; demo?: boolean }> {
     try {
       return await json(await fetch("/api/parse/status"));
     } catch {
