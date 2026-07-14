@@ -77,6 +77,9 @@ function EditorInner({ projectId }: { projectId: string }) {
           <button className="btn" onClick={save}>
             Save
           </button>
+          <button className="btn" onClick={() => navigate(`/project/${projectId}/import`)}>
+            ⬆ Import from Word
+          </button>
           <a className="btn" href={api.exportUrl(projectId)}>
             ⬇ Export Word
           </a>

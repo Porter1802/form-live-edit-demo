@@ -28,6 +28,14 @@ build plan this implements.
   tabs to see it.
 - **Word export** — faithful `.docx` with the numbering, tables, images and the
   same dollar/FTE formatting.
+- **AI Word-form import** — upload a `.docx`, have it parsed by a configurable
+  Claude endpoint into the form's fields, then **validate and confirm** before
+  anything is saved. Structured, schema-constrained extraction is snapped onto
+  the reference data (departments, financial years, LGAs, Approve/Note) by a
+  deterministic coercion layer, and every field shows a matched / check /
+  not-mapped / empty status. **Read [`docs/SECURITY-RISK-ASSESSMENT.md`](./docs/SECURITY-RISK-ASSESSMENT.md)
+  before using this with real government data** — document contents are sent to
+  the configured AI endpoint.
 
 ## Architecture
 
@@ -95,3 +103,25 @@ npm start         # node server/dist/index.cjs
 | `PORT` | `3000` | Port the server listens on (HTTP + API + WebSocket). |
 | `DATA_DIR` | `./data` | Directory for the SQLite database file. |
 | `STATIC_DIR` | `<bundle>/../public` | Built SPA directory to serve. |
+| `ANTHROPIC_API_KEY` | _(unset)_ | Enables the AI Word-form import. Server-side only. When unset, the import feature reports itself unavailable. |
+| `ANTHROPIC_BASE_URL` | Anthropic API | Point at an approved onshore / IRAP-assessed gateway. **Only taken from server config, never from the request** (endpoint allow-listing). |
+| `AI_MODEL` | `claude-opus-4-8` | Model used for extraction. A smaller model (e.g. Haiku) is a reasonable choice for this task. |
+| `AI_EFFORT` | `low` | Reasoning effort for extraction (`low`…`max`). Low favours speed and repeatability. |
+| `MAX_UPLOAD_BYTES` | `10485760` | Upload size cap for `.docx` files (10 MB). |
+| `AI_MAX_SOURCE_CHARS` | `60000` | Max characters of document text sent to the model (cost/DoS guard). |
+
+### AI Word-form import — flow & controls
+
+Upload from the landing page (**⬆ Upload Word form** → new project) or from inside
+a project (**⬆ Import from Word** → fills the current project). The flow is
+**upload → processing → validate → confirm**; nothing is written until you
+confirm. On confirm, the parsed values are applied to the collaborative document
+just like normal edits, so autosave, live preview and Word export all pick them
+up.
+
+Hardening baked in (see the risk assessment for the full picture): the AI
+endpoint is configured only from server-side env vars; uploads are memory-only,
+size-capped and `.docx`-restricted; the model is instructed to treat the document
+strictly as data (prompt-injection separation) and constrained to a JSON schema;
+all AI/extracted HTML is server-side sanitised to a strict allow-list; and the
+human validate/confirm step is mandatory.

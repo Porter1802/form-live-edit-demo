@@ -1,14 +1,8 @@
 import React, { useCallback, useRef } from "react";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import Image from "@tiptap/extension-image";
-import Table from "@tiptap/extension-table";
-import TableRow from "@tiptap/extension-table-row";
-import TableHeader from "@tiptap/extension-table-header";
-import TableCell from "@tiptap/extension-table-cell";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { contentExtensions } from "../collab/richText";
 import { useProjectDoc } from "../collab/ProjectDoc";
 
 interface Props {
@@ -138,13 +132,7 @@ export function RichTextEditor({ field, editable = true, placeholder }: Props) {
     {
       editable,
       extensions: [
-        StarterKit.configure({ history: false, heading: { levels: [1, 2, 3, 4, 5, 6] } }),
-        Underline,
-        Image.configure({ inline: false, allowBase64: true }),
-        Table.configure({ resizable: true }),
-        TableRow,
-        TableHeader,
-        TableCell,
+        ...contentExtensions(),
         Collaboration.configure({ document: doc, field }),
         CollaborationCursor.configure({
           provider,
