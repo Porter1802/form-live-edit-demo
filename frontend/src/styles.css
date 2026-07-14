@@ -102,6 +102,9 @@ h1, h2, h3, h4 { margin: 0 0 0.4em; }
   width: 20px; height: 20px; border-radius: 50%; background: rgba(0,0,0,0.08); font-size: 12px;
 }
 .crumb.active .crumb-num { background: rgba(255,255,255,0.25); }
+.crumb-preview { margin-left: auto; color: var(--brand-2); }
+.crumb-preview.active { background: var(--brand-2); color: #fff; }
+.crumb-preview .crumb-num { font-size: 13px; }
 
 /* Main panel */
 .editor-main { background: var(--panel); padding: 24px; border-radius: var(--radius); box-shadow: var(--shadow); }
@@ -180,11 +183,15 @@ h1, h2, h3, h4 { margin: 0 0 0.4em; }
 }
 .presence-count { margin-left: 10px; font-size: 13px; }
 
-/* Summary panel */
-.summary-panel { margin-top: 24px; }
-.summary-toggle { display: flex; gap: 12px; align-items: center; }
-.summary-body {
-  margin-top: 16px; background: var(--panel); border-radius: var(--radius);
+/* Preview page */
+.preview-page { padding: 0; background: none; box-shadow: none; }
+.preview-page-head {
+  display: flex; gap: 12px; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; margin-bottom: 16px;
+}
+.preview-page-head .step-title { margin: 0; border-bottom: none; padding-bottom: 0; }
+.preview-body {
+  background: var(--panel); border-radius: var(--radius);
   box-shadow: var(--shadow); padding: 40px 48px;
 }
 
