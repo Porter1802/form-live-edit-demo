@@ -45,9 +45,14 @@ export function ProjectsPage() {
           <h1>Project Reports</h1>
           <p className="muted">Multi-step capture with a live, collaboratively-editable report preview.</p>
         </div>
-        <button className="btn primary" onClick={newProject} disabled={creating}>
-          {creating ? "Creating…" : "+ New Project"}
-        </button>
+        <div className="header-actions">
+          <button className="btn" onClick={() => navigate("/import")}>
+            ⬆ Upload Word form
+          </button>
+          <button className="btn primary" onClick={newProject} disabled={creating}>
+            {creating ? "Creating…" : "+ New Project"}
+          </button>
+        </div>
       </header>
 
       {loading ? (

@@ -3,6 +3,7 @@ import http from "node:http";
 import path from "node:path";
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
+import multer from "multer";
 import * as Y from "yjs";
 import {
   listProjects,
@@ -18,7 +19,26 @@ import {
 } from "./collab.js";
 import { materialize } from "./materialize.js";
 import { exportDocx } from "./docx.js";
+import { extractDocx } from "./parse/extract.js";
+import { aiExtract, aiConfigured } from "./parse/aiExtract.js";
+import { coerce } from "./parse/coerce.js";
 import { ProjectSummary } from "../../common/src/index";
+
+// Upload guard (controls R4/R10): memory storage (no disk writes / path
+// traversal), a hard size cap, and a .docx-only filter.
+const MAX_UPLOAD_BYTES = Number(process.env.MAX_UPLOAD_BYTES) || 10 * 1024 * 1024;
+const DOCX_MIME =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const uploadDocx = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_BYTES, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    const okMime = file.mimetype === DOCX_MIME || file.mimetype === "application/octet-stream";
+    const okExt = /\.docx$/i.test(file.originalname || "");
+    if (okMime && okExt) cb(null, true);
+    else cb(new Error("Only .docx files are accepted"));
+  },
+});
 
 // esbuild provides a real __dirname in the CJS bundle (dist/index.cjs).
 const PORT = Number(process.env.PORT) || 3000;
@@ -87,6 +107,55 @@ app.get("/api/projects/:id/export.docx", async (req, res) => {
   );
   res.setHeader("Content-Disposition", `attachment; filename="${safeName}.docx"`);
   res.send(buffer);
+});
+
+// ---- AI Word-form parsing --------------------------------------------------
+// Reports whether the AI backend is configured (drives the upload UI).
+app.get("/api/parse/status", (_req, res) => {
+  res.json({ available: aiConfigured() });
+});
+
+// Accepts a .docx upload, extracts its text, asks the AI to extract a structured
+// proposal, then deterministically coerces it onto the reference data. Returns a
+// proposal for the client's validate/confirm step — it does NOT persist anything.
+// See docs/SECURITY-RISK-ASSESSMENT.md for the controls behind this endpoint.
+app.post("/api/projects/parse", (req, res) => {
+  uploadDocx.single("file")(req, res, async (err: unknown) => {
+    if (err) {
+      const isSize = err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE";
+      res.status(isSize ? 413 : 400).json({
+        error: isSize
+          ? `File too large (max ${Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))} MB)`
+          : (err as Error).message || "Upload rejected",
+      });
+      return;
+    }
+    if (!aiConfigured()) {
+      res.status(503).json({
+        error:
+          "AI backend not configured. Set ANTHROPIC_API_KEY (and optionally ANTHROPIC_BASE_URL / AI_MODEL) on the server.",
+      });
+      return;
+    }
+    const file = (req as express.Request & { file?: { buffer: Buffer } }).file;
+    if (!file) {
+      res.status(400).json({ error: "No file uploaded (field name must be 'file')" });
+      return;
+    }
+    try {
+      const { text } = await extractDocx(file.buffer);
+      if (!text.trim()) {
+        res.status(422).json({ error: "No readable text found in the document" });
+        return;
+      }
+      const { extraction, sourceChars, truncated } = await aiExtract(text);
+      const proposal = coerce(extraction, sourceChars, truncated);
+      res.json(proposal);
+    } catch (e) {
+      console.error("parse failed", e);
+      res.status(502).json({ error: "Failed to parse the document with the AI backend" });
+    }
+  });
 });
 
 // ---- Static SPA ------------------------------------------------------------
